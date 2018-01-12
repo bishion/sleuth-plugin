@@ -13,7 +13,7 @@ bizi:
 ### 调用方式:
 ```java
 @Service
-public class LangInfoService {
+public class SessionInfoService {
     @Resource
     private SessionInfoOperator sessionInfoOperator;
 
