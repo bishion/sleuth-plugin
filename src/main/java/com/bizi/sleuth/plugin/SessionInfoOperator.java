@@ -1,19 +1,19 @@
 package com.bizi.sleuth.plugin;
 
-import org.springframework.cloud.sleuth.trace.DefaultTracer;
+import org.springframework.cloud.sleuth.Tracer;
 
 public class SessionInfoOperator {
-    private DefaultTracer defaultTracer;
+    private Tracer tracer;
 
-    public SessionInfoOperator(DefaultTracer defaultTracer) {
-        this.defaultTracer = defaultTracer;
+    public SessionInfoOperator(Tracer tracer) {
+        this.tracer = tracer;
     }
-    public String getSessionInfo(String cacheKey){
-        return SessionInfoCache.getSessionInfo(defaultTracer.getCurrentSpan().getTraceId(),cacheKey);
-    }
-    public void setSessionInfo(String cacheKey,String cacheValue){
 
-        Long key = defaultTracer.getCurrentSpan().getTraceId();
-        SessionInfoCache.setSessionInfo(key,cacheKey,cacheValue);
+    public String getSessionInfo(String key){
+        return tracer.getCurrentSpan().getBaggageItem(key);
     }
+    public void setSessionInfo(String key,String value){
+        tracer.getCurrentSpan().setBaggageItem(key,value);
+    }
+
 }

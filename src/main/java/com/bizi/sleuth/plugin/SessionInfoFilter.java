@@ -1,8 +1,8 @@
 package com.bizi.sleuth.plugin;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.cloud.sleuth.instrument.web.SleuthWebProperties;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.GenericFilterBean;
@@ -19,11 +19,12 @@ import java.util.regex.Pattern;
 @Order
 public class SessionInfoFilter extends GenericFilterBean {
     private Pattern skipPattern = Pattern.compile(SleuthWebProperties.DEFAULT_SKIP_PATTERN);
-    private static final Log log = LogFactory.getLog(SessionInfoFilter.class);
     private String[] headers;
+    private Tracer tracer;
 
-    public SessionInfoFilter(String[] headers) {
+    public SessionInfoFilter(String[] headers,Tracer tracer) {
         this.headers = headers;
+        this.tracer = tracer;
     }
 
     @Override
@@ -34,10 +35,13 @@ public class SessionInfoFilter extends GenericFilterBean {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         boolean skip = skipPattern.matcher(httpRequest.getRequestURI()).matches();
         if (!skip) {
-            Span span = (Span) request.getAttribute("org.springframework.cloud.sleuth.instrument.web.TraceFilter.TRACE");
-            Long traceId = span.getTraceId();
-            SessionInfoCache.buildAllHeaders(traceId, headers, httpRequest);
-
+            Span span = tracer.getCurrentSpan();
+            for (String head : headers){
+                String value = httpRequest.getHeader(head);
+                if(StringUtils.isNotEmpty(value)){
+                    span.setBaggageItem(head,value);
+                }
+            }
         }
         chain.doFilter(request, response);
     }
